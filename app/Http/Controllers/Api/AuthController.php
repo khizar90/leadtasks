@@ -30,15 +30,15 @@ class AuthController extends Controller
 
         $otp = random_int(100000, 999999);
 
-        // $mail_details = [
-        //     'body' => $otp,
-        // ];
-        // Mail::to($request->email)->send(new OtpSend($mail_details));
+        $mail_details = [
+            'body' => $otp,
+        ];
+        Mail::to($request->email)->send(new OtpSend($mail_details));
 
 
         $user = new OtpVerify();
         $user->email = $request->email;
-        $user->otp = 123456;
+        $user->otp = $otp;
         $user->save();
         return response()->json([
             'status' => true,
@@ -193,7 +193,7 @@ class AuthController extends Controller
 
             $userOtp = new OtpVerify();
             $userOtp->email = $request->email;
-            $userOtp->otp = 123456;
+            $userOtp->otp = $otp;
             $userOtp->save();
 
             $mailDetails = [
@@ -201,7 +201,7 @@ class AuthController extends Controller
                 'first_name' => $user->name
             ];
 
-            // Mail::to($request->email)->send(new ForgotOtp($mailDetails));
+            Mail::to($request->email)->send(new ForgotOtp($mailDetails));
 
             return response()->json([
                 'status' => true,
