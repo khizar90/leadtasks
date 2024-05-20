@@ -22,10 +22,8 @@ class UserController extends Controller
         if ($user) {
             $user->skills = UserSkill::where('user_id', $user->uuid)->get();;
             $user->education = UserEducation::where('user_id', $user->uuid)->get();
-            $portfolio = Portfolio::where('user_id', $user->uuid)->first();
+            $portfolio = Portfolio::select('id','image')->where('user_id', $user->uuid)->get();
             if ($portfolio) {
-                $portfolio->image = explode(',', $portfolio->image);
-
                 $user->portfolio = $portfolio;
             }
             else{

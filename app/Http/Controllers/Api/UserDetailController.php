@@ -34,7 +34,7 @@ class UserDetailController extends Controller
     public function listEducation(Request $request)
     {
         $user = User::find($request->user()->uuid);
-        $find = UserEducation::where('user_id',$user->uuid)->latest()->get();
+        $find = UserEducation::where('user_id', $user->uuid)->latest()->get();
         return response()->json([
             'status' => true,
             'action' => "Education list",
@@ -119,27 +119,23 @@ class UserDetailController extends Controller
 
         $user = User::find($request->user()->uuid);
         if ($user) {
-            $images = [];
-            $create = new Portfolio();
-            $create->user_id = $user->uuid;
+
             if ($request->hasFile('media')) {
+
                 $files = $request->file('media');
                 foreach ($files as $file) {
+                    $create = new Portfolio();
+                    $create->user_id = $user->uuid;
                     $extension = $file->getClientOriginalExtension();
                     $mime = explode('/', $file->getClientMimeType());
                     $filename = time() . '-' . uniqid() . '.' . $extension;
                     if ($file->move('uploads/user/' . $user->uuid . '/portfolio/', $filename)) {
                         $path = '/uploads/user/' . $user->uuid . '/portfolio/' . $filename;
-                        $images[] = $path;
+                        $create->image = $path;
+                        $create->save();
                     }
                 }
-                $imageString = implode(',', $images); // Convert array to comma-separated string
-                $create->image = $imageString;
-
-
-                // $create->image = $images;
             }
-            $create->save();
 
 
             return response()->json([
@@ -149,9 +145,10 @@ class UserDetailController extends Controller
         }
     }
 
-    public function deletePortfolio($id){
+    public function deletePortfolio($id)
+    {
         $find = Portfolio::find($id);
-        if($find){
+        if ($find) {
             $find->delete();
             return response()->json([
                 'status' => true,
