@@ -28,6 +28,7 @@ class CreateJobRequest extends FormRequest
             'category_name' => 'required',
             'title' => 'required',
             'is_flexible' => 'required',
+            'task_time' => 'required',
             'budget_type' => 'required',
             'budget' => 'required',
             'location' => 'required',

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Job\CreateJobRequest;
+use App\Models\Category;
 use App\Models\Jobs;
 use App\Models\JobView;
 use App\Models\Offer;
@@ -20,10 +21,36 @@ class JobController extends Controller
         $user = User::find($request->user()->uuid);
         $jobIds = JobView::where('user_id', $user->uuid)->limit(12)->pluck('job_id');
         $recents = Jobs::whereIn('id', $jobIds)->latest()->limit(12)->get();
-        // foreach($jobIds as $item){
-        //     $job = Jobs::find($item);
-        //     $recents[] = $job;
-        // }
+        foreach ($recents as $item) {
+            $category = Category::find($item->category_id);
+            if ($category) {
+                $item->category_image = $category->image;
+            } else {
+                $item->category_image = '';
+            }
+
+            $saved  = SaveJob::where('job_id', $item->id)->where('user_id', $user->uuid)->first();
+            if ($saved) {
+                $item->is_saved = true;
+            } else {
+                $item->is_saved = false;
+            }
+
+        }
+        foreach ($active as $item1) {
+            $category = Category::find($item1->category_id);
+            if ($category) {
+                $item1->category_image = $category->image;
+            } else {
+                $item1->category_image = '';
+            }
+            $saved  = SaveJob::where('job_id', $item1->id)->where('user_id', $user->uuid)->first();
+            if ($saved) {
+                $item1->is_saved = true;
+            } else {
+                $item1->is_saved = false;
+            }
+        }
 
         return response()->json([
             'status' => true,
@@ -54,6 +81,12 @@ class JobController extends Controller
             } else {
                 $job->is_saved = false;
             }
+            $category = Category::find($job->category_id);
+            if ($category) {
+                $job->category_image = $category->image;
+            } else {
+                $job->category_image = '';
+            }
         }
         return response()->json([
             'status' => true,
@@ -75,6 +108,7 @@ class JobController extends Controller
         $create->date = $request->date ?: '';
         $create->budget_type = $request->budget_type;
         $create->budget = $request->budget;
+        $create->task_time = $request->task_time;
         $create->location = $request->location;
         $create->lat = $request->lat;
         $create->lng = $request->lng;
@@ -93,6 +127,13 @@ class JobController extends Controller
     {
         $job = Jobs::with(['user'])->where('id', $job_id)->first();
 
+        $category = Category::find($job->category_id);
+        if ($category) {
+            $job->category_image = $category->image;
+        } else {
+            $job->category_image = '';
+        }
+
         $saved  = SaveJob::where('job_id', $job_id)->where('user_id', $request->user()->uuid)->first();
         if ($saved) {
             $job->is_saved = true;
@@ -100,11 +141,10 @@ class JobController extends Controller
             $job->is_saved = false;
         }
 
-        $is_apply = Offer::where('user_id', $request->user()->uuid)->where('job_id', $job_id)->firs();
-        if($is_apply){
+        $is_apply = Offer::where('user_id', $request->user()->uuid)->where('job_id', $job_id)->first();
+        if ($is_apply) {
             $job->is_apply = true;
-        }
-        else{
+        } else {
             $job->is_apply = false;
         }
         $find = JobView::where('job_id', $job_id)->where('user_id', $request->user()->uuid)->first();
@@ -114,6 +154,9 @@ class JobController extends Controller
             $create->job_id = $job_id;
             $create->save();
         }
+
+        $total_offer = Offer::where('job_id', $job_id)->count();
+        $job->total_offer = $total_offer;
 
         return response()->json([
             'status' => true,
@@ -144,6 +187,4 @@ class JobController extends Controller
             'action' => "Job Saved",
         ]);
     }
-
-
 }

@@ -260,21 +260,30 @@ class AuthController extends Controller
         ]);
     }
 
-    public function deleteAccount(DeleteAccountRequest $request)
+    public function deleteAccount(Request $request)
     {
         $user = User::find($request->user()->uuid);
         if ($user) {
-            if (Hash::check($request->password, $user->password)) {
+            if ($request->has('password')) {
+                if (Hash::check($request->password, $user->password)) {
+                    $user->delete();
+                    $user->tokens()->delete();
+                    return response()->json([
+                        'status' => true,
+                        'action' => "Account deleted",
+                    ]);
+                } else {
+                    return response()->json([
+                        'status' => false,
+                        'action' => 'Please enter correct password',
+                    ]);
+                }
+            } else {
                 $user->delete();
                 $user->tokens()->delete();
                 return response()->json([
                     'status' => true,
                     'action' => "Account deleted",
-                ]);
-            } else {
-                return response()->json([
-                    'status' => false,
-                    'action' => 'Please enter correct password',
                 ]);
             }
         } else {
