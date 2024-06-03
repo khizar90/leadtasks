@@ -7,6 +7,7 @@ use App\Http\Requests\Job\CreateJobRequest;
 use App\Models\Category;
 use App\Models\Jobs;
 use App\Models\JobView;
+use App\Models\Message;
 use App\Models\Offer;
 use App\Models\SaveJob;
 use App\Models\User;
@@ -35,7 +36,6 @@ class JobController extends Controller
             } else {
                 $item->is_saved = false;
             }
-
         }
         foreach ($active as $item1) {
             $category = Category::find($item1->category_id);
@@ -185,6 +185,77 @@ class JobController extends Controller
         return response()->json([
             'status' => true,
             'action' => "Job Saved",
+        ]);
+    }
+
+    public function delete($job_id)
+    {
+        $find = Jobs::find($job_id);
+        if ($find) {
+            $find->delete();
+            return response()->json([
+                'status' => true,
+                'action' => "Job Deleted!",
+            ]);
+        } else {
+            return response()->json([
+                'status' => false,
+                'action' => "Job not found",
+            ]);
+        }
+    }
+
+    public function listSavedJob(Request $request)
+    {
+        $user = User::find($request->user()->uuid);
+        $job_ids = SaveJob::where('user_id', $user->uuid)->orderBy('id', 'desc')->pluck('job_id');
+        $jobs = [];
+        foreach ($job_ids as $id) {
+            $job = Jobs::find($id);
+            if ($job) {
+                $job->is_saved = true;
+                $category = Category::find($job->category_id);
+                if ($category) {
+                    $job->category_image = $category->image;
+                } else {
+                    $job->category_image = '';
+                }
+            }
+            $jobs[] = $job;
+        }
+
+        $count  = count($jobs);
+        $jobs = collect($jobs);
+        $jobs = $jobs->forPage($request->page, 12)->values();
+
+
+        return response()->json([
+            'status' => true,
+            'action' => "Saved Jobs",
+            'data' => array(
+                'data' => $jobs,
+                'total' => $count
+            )
+        ]);
+    }
+    public function listMessages(Request $request,$offer_id){
+        $offer = Offer::find($offer_id);
+        $user = User::find($offer->user_id);
+
+        if ($offer) {
+            $messages = Message::where('offer_id',$offer_id)->get();
+            foreach($messages as $messages){
+                $messages->user = $user;
+            }
+            return response()->json([
+                'status' => true,
+                'action' => "Conversation",
+                'data' => $messages,
+            ]);
+        }
+        return response()->json([
+            'status' => false,
+            'action' => "No Job found",
         ]);
     }
 }

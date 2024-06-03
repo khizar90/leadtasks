@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('from')->nullable();
             $table->string('to')->nullable();
-            $table->unsignedBigInteger('ticket_id')->default(0);
+            $table->unsignedBigInteger('offer_id')->default(0);
             $table->string('from_to')->default('');
             $table->text('type');
             $table->string('message');
