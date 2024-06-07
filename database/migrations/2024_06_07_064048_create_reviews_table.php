@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignUuid('user_id')->references('uuid')->on('users')->onDelete('cascade');
             $table->foreignUuid('person_id')->references('uuid')->on('users')->onDelete('cascade');
-            $table->foreignId('job_id')->constrained('jobs')->onDelete('cascade');
+            $table->foreignId('offer_id')->constrained('offers')->onDelete('cascade');
             $table->integer('rating');
             $table->longText('feedback')->default('');
             $table->string('time');

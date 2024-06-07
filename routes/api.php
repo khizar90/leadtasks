@@ -61,7 +61,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('job/list/{type}', [JobController::class, 'list']);
     Route::get('saved/job/list', [JobController::class, 'listSavedJob']);
     Route::get('list/messages/{offer_id}', [JobController::class, 'listMessages']);
-    Route::post('job/review', [JobController::class, 'addReview']);
+    Route::post('job/add/review', [JobController::class, 'addReview']);
+    Route::get('job/list/reviews/{offer_id}', [JobController::class, 'listReviews']);
 
 
     Route::get('user/profile/{id}', [UserController::class, 'profile']);

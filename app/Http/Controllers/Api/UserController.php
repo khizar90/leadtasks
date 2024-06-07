@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\Jobs;
 use App\Models\Offer;
 use App\Models\Portfolio;
+use App\Models\Review;
 use App\Models\User;
 use App\Models\UserEducation;
 use App\Models\UserSkill;
@@ -22,14 +24,12 @@ class UserController extends Controller
         if ($user) {
             $user->skills = UserSkill::where('user_id', $user->uuid)->get();;
             $user->education = UserEducation::where('user_id', $user->uuid)->get();
-            $portfolio = Portfolio::select('id','image')->where('user_id', $user->uuid)->get();
+            $portfolio = Portfolio::select('id', 'image')->where('user_id', $user->uuid)->get();
             if ($portfolio) {
                 $user->portfolio = $portfolio;
-            }
-            else{
+            } else {
                 $obj = new stdClass();
                 $user->portfolio = $obj;
-
             }
             $user->reviews = 4.0;
             return response()->json([
@@ -80,6 +80,14 @@ class UserController extends Controller
         $user = User::find($request->user()->uuid);
         $jobIds  = Offer::where('user_id', $user->uuid)->where('status', $status)->orderBy('id', 'asc')->pluck('job_id');
         $jobs = Jobs::with(['user'])->whereIn('id', $jobIds)->latest()->paginate(12);
+        foreach ($jobs as $item) {
+            $category = Category::find($item->category_id);
+            if ($category) {
+                $item->category_image = $category->image;
+            } else {
+                $item->category_image = '';
+            }
+        }
         return response()->json([
             'status' => true,
             'action' =>  'jobs',
@@ -89,11 +97,29 @@ class UserController extends Controller
 
     public function appliedJobDetail(Request $request, $job_id)
     {
+        $user = User::find($request->user()->uuid);
         $obj = new stdClass();
         $job = Jobs::with(['user'])->where('id', $job_id)->first();
-        $offer = Offer::where('user_id', $request->user()->uuid)->where('job_id', $job_id)->first();
+        $offer = Offer::where('user_id', $user->uuid)->where('job_id', $job_id)->first();
+        $category = Category::find($job->category_id);
+        if ($category) {
+            $job->category_image = $category->image;
+        } else {
+            $job->category_image = '';
+        }
+
         $obj->job = $job;
+        $check = Review::where('user_id', $offer->user_id)->where('person_id', $user->uuid)->first();
+        if ($check) {
+            $offer->is_review_added = true;
+            $offer->review_count = 1;
+        }
+        else{
+            $offer->is_review_added = false;
+            $offer->review_count = 0;
+        }
         $obj->offer = $offer;
+
         return response()->json([
             'status' => true,
             'action' =>  'Detail',
@@ -143,6 +169,15 @@ class UserController extends Controller
             $jobIds = Jobs::where('user_id', $user->uuid)->pluck('id');
             $ofersIds = Offer::whereIn('job_id', $jobIds)->where('status', 2)->pluck('job_id');
             $jobs = Jobs::whereIn('id', $ofersIds)->orderBy('id', 'desc')->paginate(12);
+        }
+
+        foreach ($jobs as $item) {
+            $category = Category::find($item->category_id);
+            if ($category) {
+                $item->category_image = $category->image;
+            } else {
+                $item->category_image = '';
+            }
         }
         return response()->json([
             'status' => true,

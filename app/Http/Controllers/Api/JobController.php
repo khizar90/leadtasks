@@ -265,7 +265,7 @@ class JobController extends Controller
         $user = User::find($request->user()->uuid);
         $validator = Validator::make($request->all(), [
             'user_id' => "required|exists:users,uuid",
-            'job_id' => "required|exists:jobs,id",
+            'offer_id' => "required|exists:offers,id",
             'rating' => 'required'
         ]);
 
@@ -281,7 +281,7 @@ class JobController extends Controller
         $create = new Review();
         $create->user_id = $request->user_id;
         $create->person_id = $user->uuid;
-        $create->job_id = $request->job_id;
+        $create->offer_id = $request->offer_id;
         $create->rating = $request->rating;
         $create->feedback = $request->feedback ? : '';
         $create->time = time();
@@ -290,6 +290,15 @@ class JobController extends Controller
             'status' => true,
             'action' => "Rating Added",
             'data' => $create
+        ]);
+    }
+
+    public function listReviews($offer_id){
+        $reviews = Review::with(['user'])->where('offer_id',$offer_id)->get();
+        return response()->json([
+            'status' => true,
+            'action' => "Rating List",
+            'data' => $reviews            
         ]);
     }
 }
