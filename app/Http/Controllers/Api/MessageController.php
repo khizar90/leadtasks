@@ -15,6 +15,7 @@ class MessageController extends Controller
     {
         if ($request->offer_id) {
             $validator = Validator::make($request->all(), [
+                'from' => "required|exists:users,uuid",
                 'offer_id' => "required|exists:jobs,id",
                 'message' => 'required'
             ]);
@@ -39,9 +40,9 @@ class MessageController extends Controller
 
         if ($request->offer_id) {
             $chat_message = new Message();
-            $chat_message->from = $request->from ? : '';
+            $chat_message->from = $request->from;
             $chat_message->type = $request->type;
-            $chat_message->to = $request->to ? : '';
+            $chat_message->to = '';
             $chat_message->offer_id = $request->offer_id;
             $chat_message->message = $request->message;
             $chat_message->time = strtotime(date('Y-m-d H:i:s'));

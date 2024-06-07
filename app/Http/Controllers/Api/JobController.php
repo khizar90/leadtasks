@@ -9,9 +9,11 @@ use App\Models\Jobs;
 use App\Models\JobView;
 use App\Models\Message;
 use App\Models\Offer;
+use App\Models\Review;
 use App\Models\SaveJob;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class JobController extends Controller
 {
@@ -240,12 +242,12 @@ class JobController extends Controller
     }
     public function listMessages(Request $request,$offer_id){
         $offer = Offer::find($offer_id);
-        $user = User::find($offer->user_id);
+        // $user = User::find($offer->user_id);
 
         if ($offer) {
             $messages = Message::where('offer_id',$offer_id)->get();
             foreach($messages as $messages){
-                $messages->user = $user;
+                $messages->user = User::find($messages->from);
             }
             return response()->json([
                 'status' => true,
@@ -256,6 +258,38 @@ class JobController extends Controller
         return response()->json([
             'status' => false,
             'action' => "No Job found",
+        ]);
+    }
+
+    public function addReview(Request $request){
+        $user = User::find($request->user()->uuid);
+        $validator = Validator::make($request->all(), [
+            'user_id' => "required|exists:users,uuid",
+            'job_id' => "required|exists:jobs,id",
+            'rating' => 'required'
+        ]);
+
+        $errorMessage = implode(', ', $validator->errors()->all());
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'action' =>  $errorMessage,
+            ]);
+        }
+
+        $create = new Review();
+        $create->user_id = $request->user_id;
+        $create->person_id = $user->uuid;
+        $create->job_id = $request->job_id;
+        $create->rating = $request->rating;
+        $create->feedback = $request->feedback ? : '';
+        $create->time = time();
+        $create->save();
+        return response()->json([
+            'status' => true,
+            'action' => "Rating Added",
+            'data' => $create
         ]);
     }
 }
