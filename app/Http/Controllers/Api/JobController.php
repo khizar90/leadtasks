@@ -124,6 +124,39 @@ class JobController extends Controller
             'data' => $create
         ]);
     }
+    public function edit(Request $request)
+    {
+        $user = User::find($request->user()->uuid);
+        $create = Jobs::find($request->job_id);
+        if ($create) {
+            $create->category_id = $request->category_id;
+            $create->category_name = $request->category_name;
+            $create->requirement = $request->requirement ?: '';
+            $create->description = $request->description ?: '';
+            $create->title = $request->title;
+            $create->is_flexible = $request->is_flexible;
+            $create->date = $request->date ?: '';
+            $create->budget_type = $request->budget_type;
+            $create->budget = $request->budget;
+            $create->task_time = $request->task_time;
+            $create->location = $request->location;
+            $create->lat = $request->lat;
+            $create->lng = $request->lng;
+            $create->is_remote = $request->is_remote;
+            $create->time = strtotime(date('Y-m-d H:i:s'));
+            $create->save();
+
+            return response()->json([
+                'status' => true,
+                'action' => "Job Edit",
+                'data' => $create
+            ]);
+        }
+        return response()->json([
+            'status' => false,
+            'action' => "Job not found",
+        ]);
+    }
 
     public function detail(Request $request, $job_id)
     {
@@ -172,7 +205,7 @@ class JobController extends Controller
 
         $find = SaveJob::where('job_id', $job_id)->where('user_id', $request->user()->uuid)->first();
         if ($find) {
-            $find->delete();
+            // $find->delete();
             return response()->json([
                 'status' => true,
                 'action' => "Job Un Saved",
@@ -240,14 +273,15 @@ class JobController extends Controller
             )
         ]);
     }
-    public function listMessages(Request $request,$offer_id){
+    public function listMessages(Request $request, $offer_id)
+    {
         $offer = Offer::find($offer_id);
         // $user = User::find($offer->user_id);
 
         if ($offer) {
-            $messages = Message::where('offer_id',$offer_id)->get();
-            foreach($messages as $messages){
-                $messages->user = User::find($messages->from);
+            $messages = Message::where('offer_id', $offer_id)->latest()->paginate(25);
+            foreach ($messages as $message) {
+                $message->user = User::find($message->from);
             }
             return response()->json([
                 'status' => true,
@@ -261,7 +295,8 @@ class JobController extends Controller
         ]);
     }
 
-    public function addReview(Request $request){
+    public function addReview(Request $request)
+    {
         $user = User::find($request->user()->uuid);
         $validator = Validator::make($request->all(), [
             'user_id' => "required|exists:users,uuid",
@@ -283,7 +318,7 @@ class JobController extends Controller
         $create->person_id = $user->uuid;
         $create->offer_id = $request->offer_id;
         $create->rating = $request->rating;
-        $create->feedback = $request->feedback ? : '';
+        $create->feedback = $request->feedback ?: '';
         $create->time = time();
         $create->save();
         return response()->json([
@@ -293,12 +328,13 @@ class JobController extends Controller
         ]);
     }
 
-    public function listReviews($offer_id){
-        $reviews = Review::with(['user'])->where('offer_id',$offer_id)->get();
+    public function listReviews($offer_id)
+    {
+        $reviews = Review::with(['user'])->where('offer_id', $offer_id)->get();
         return response()->json([
             'status' => true,
             'action' => "Rating List",
-            'data' => $reviews            
+            'data' => $reviews
         ]);
     }
 }

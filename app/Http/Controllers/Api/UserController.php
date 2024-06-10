@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\ReportRequest;
 use App\Models\Category;
 use App\Models\Jobs;
 use App\Models\Offer;
 use App\Models\Portfolio;
+use App\Models\Report;
 use App\Models\Review;
 use App\Models\User;
 use App\Models\UserEducation;
@@ -195,4 +197,21 @@ class UserController extends Controller
             'data' => $offers
         ]);
     }
+
+    public function report(ReportRequest $request)
+    {
+        $user = User::find($request->user()->uuid);
+        $create = new Report();
+        $create->user_id = $user->uuid;
+        $create->type = $request->type;
+        $create->reported_id = $request->reported_id;
+        $create->message = $request->message;
+        $create->save();
+
+        return response()->json([
+            'status' => true,
+            'action' =>  'Report Added',
+        ]);
+    }
+
 }

@@ -55,6 +55,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     
 
     Route::post('create/job', [JobController::class, 'create']);
+    Route::post('edit/job', [JobController::class, 'edit']);
+    Route::get('delete/job/{job_id}', [JobController::class, 'delete']);
     Route::get('job/home', [JobController::class, 'index']);
     Route::get('job/detail/{job_id}', [JobController::class, 'detail']);
     Route::get('job/save/{job_id}', [JobController::class, 'save']);
@@ -72,6 +74,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('user/job/change/status/{status}/{ofer_id}', [UserController::class, 'changeStatus']);
     Route::get('user/my/jobs/{type}', [UserController::class, 'myJobs']);
     Route::get('user/see/jobs/offer/{job_id}', [UserController::class, 'seeOffer']);
+    Route::post('report', [UserController::class, 'report']);
 
     Route::post('send/message', [MessageController::class, 'sendMessage']);
     Route::get('inbox', [MessageController::class, 'inbox']);
