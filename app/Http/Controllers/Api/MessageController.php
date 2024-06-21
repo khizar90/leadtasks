@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Message;
+use App\Models\Offer;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -52,16 +53,15 @@ class MessageController extends Controller
                 $mime = explode('/', $file->getClientMimeType());
                 $filename = time() . '-' . uniqid() . '.' . $extension;
                 if ($file->move('uploads/user/' . $request->offer_id . '/message/', $filename))
-                    $image = '/uploads/user/' .$request->offer_id . '/message/' . $filename;
+                    $image = '/uploads/user/' . $request->offer_id . '/message/' . $filename;
                 $chat_message->attachment = $image;
             }
 
             $chat_message->save();
             $chat_message = Message::find($chat_message->id);
-            if($request->from){
+            if ($request->from) {
                 $chat_message->user = User::find($request->from);
-            }
-            else{
+            } else {
                 $chat_message->user = User::find($request->to);
             }
         } else {
@@ -124,14 +124,18 @@ class MessageController extends Controller
     public function conversation(Request $request, $to_id)
     {
         $user = User::find($request->user()->uuid);
-
-
         Message::where('from', $to_id)->where('to', $user->uuid)->where('is_read', 0)->update(['is_read' => 1]);
-
-        $messages = Message::where('offer_id', 0)->where('from_to', $user->uuid . '-' . $to_id)->orWhere('from_to', $to_id . '-' . $user->uuid)->latest()->Paginate(25);
+        $messages = Message::where('from_to', $user->uuid . '-' . $to_id)->orWhere('from_to', $to_id . '-' . $user->uuid)->latest()->Paginate(25);
         $user1 = User::where('uuid', $to_id)->first();
-        foreach ($messages as $message)
+        foreach ($messages as $message) {
+            $offer = Offer::find($message->offer_id);
+            if ($offer) {
+                $message->offer_status = $offer->status;
+            } else {
+                $message->offer_status = '';
+            }
             $message->user = $user1;
+        }
         return response()->json([
             'status' => true,
             'action' =>  'Conversation',
@@ -181,6 +185,60 @@ class MessageController extends Controller
             'status' => true,
             'action' =>  'Inbox',
             'data' => $arr1
+        ]);
+    }
+
+    public function createOffer(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'to' => 'required|exists:users,uuid',
+            'description' => 'required',
+            'time' => 'required',
+            'budget' => 'required',
+        ]);
+
+        $errorMessage = implode(', ', $validator->errors()->all());
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'action' =>  $errorMessage,
+            ]);
+        }
+        $user = User::find($request->user()->uuid);
+        $create = new Offer();
+        $create->user_id = $user->uuid;
+        $create->job_id = 0;
+        $create->budget = $request->budget;
+        $create->time = $request->time;
+        $create->description = $request->description;
+        $create->save();
+
+
+        $chat_message = new Message();
+        $chat_message->from = $user->uuid;
+        $chat_message->to = $request->to;
+        $chat_message->offer_id = $create->id;
+        $chat_message->type = 'offer';
+        $chat_message->message = $create->description;
+        $chat_message->offer_budget = $create->budget;
+        $chat_message->offer_time = $create->time;
+        $chat_message->time = time();
+        $find = Message::where('from_to', $user->uuid . '-' . $request->to)->orWhere('from_to', $request->to . '-' . $user->uuid)->first();
+        $channel = '';
+        if ($find) {
+            $channel = $find->from_to;
+            $chat_message->from_to = $find->from_to;
+            Message::where('from_to', $chat_message->from_to)->where('to', $user->uuid)->where('is_read', 0)->update(['is_read' => 1]);
+        } else {
+            $channel = '';
+            $chat_message->from_to = $user->uuid . '-' . $request->to;
+        }
+        $chat_message->save();
+
+        return response()->json([
+            'status' => true,
+            'action' =>  'Offer Send',
         ]);
     }
 }

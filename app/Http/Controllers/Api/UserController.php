@@ -33,7 +33,7 @@ class UserController extends Controller
                 $obj = new stdClass();
                 $user->portfolio = $obj;
             }
-            $user->reviews = 4.0;
+            $user->reviews = Review::where('user_id',$user->uuid)->avg('rating');
             return response()->json([
                 'status' => true,
                 'action' =>  'Profile',
@@ -80,21 +80,46 @@ class UserController extends Controller
     public function listJobs(Request $request, $status)
     {
         $user = User::find($request->user()->uuid);
-        $jobIds  = Offer::where('user_id', $user->uuid)->where('status', $status)->orderBy('id', 'asc')->pluck('job_id');
-        $jobs = Jobs::with(['user'])->whereIn('id', $jobIds)->latest()->paginate(12);
-        foreach ($jobs as $item) {
-            $category = Category::find($item->category_id);
-            if ($category) {
-                $item->category_image = $category->image;
-            } else {
-                $item->category_image = '';
+        $offers  = Offer::where('user_id', $user->uuid)->where('status', $status)->latest()->paginate(12);
+        foreach($offers as $offer){
+            $job = Jobs::find($offer->job_id);
+            if($job){
+                $category = Category::find($job->category_id);
+                if ($category) {
+                    $job->category_image = $category->image;
+                } else {
+                    $job->category_image = '';
+                }
+                $offer->job = $job;
+            }
+            else{
+                $offer->job = new stdClass();
+
             }
         }
+       
         return response()->json([
             'status' => true,
             'action' =>  'jobs',
-            'data' => $jobs
+            'data' => $offers
         ]);
+
+        // $user = User::find($request->user()->uuid);
+        // $jobIds  = Offer::where('user_id', $user->uuid)->where('status', $status)->orderBy('id', 'asc')->pluck('job_id');
+        // $jobs = Jobs::with(['user'])->whereIn('id', $jobIds)->latest()->paginate(12);
+        // foreach ($jobs as $item) {
+        //     $category = Category::find($item->category_id);
+        //     if ($category) {
+        //         $item->category_image = $category->image;
+        //     } else {
+        //         $item->category_image = '';
+        //     }
+        // }
+        // return response()->json([
+        //     'status' => true,
+        //     'action' =>  'jobs',
+        //     'data' => $jobs
+        // ]);
     }
 
     public function appliedJobDetail(Request $request, $job_id)
@@ -143,6 +168,7 @@ class UserController extends Controller
             if ($request->status == 2) {
                 $find->complete_time =  strtotime(date('Y-m-d H:i:s'));
             }
+            
             $find->save();
 
             return response()->json([

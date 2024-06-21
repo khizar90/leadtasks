@@ -79,6 +79,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('send/message', [MessageController::class, 'sendMessage']);
     Route::get('inbox', [MessageController::class, 'inbox']);
     Route::get('conversation/{to_id}', [MessageController::class, 'conversation']);
+    Route::post('create/offer', [MessageController::class, 'createOffer']);
 
 
 });

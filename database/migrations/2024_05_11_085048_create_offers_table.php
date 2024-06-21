@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('offers', function (Blueprint $table) {
             $table->id();
             $table->foreignUuid('user_id')->references('uuid')->on('users')->onDelete('cascade');
-            $table->foreignId('job_id')->constrained('jobs')->onDelete('cascade');
+            $table->unsignedBigInteger('job_id');
             $table->string('budget');
             $table->string('time');
             $table->longText('description');

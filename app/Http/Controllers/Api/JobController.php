@@ -70,31 +70,62 @@ class JobController extends Controller
 
         if ($type == 'active') {
             $jobs = Jobs::latest()->paginate(12);
-        }
-        if ($type == 'recent') {
-            $jobIds = JobView::where('user_id', $user->uuid)->pluck('job_id');
-            $jobs = Jobs::whereIn('id', $jobIds)->latest()->paginate(12);
+            foreach ($jobs as $job) {
+                $saved  = SaveJob::where('job_id', $job->id)->where('user_id', $user->uuid)->first();
+                if ($saved) {
+                    $job->is_saved = true;
+                } else {
+                    $job->is_saved = false;
+                }
+                $category = Category::find($job->category_id);
+                if ($category) {
+                    $job->category_image = $category->image;
+                } else {
+                    $job->category_image = '';
+                }
+            }
+            return response()->json([
+                'status' => true,
+                'action' => "Jobs",
+                'data' => $jobs
+            ]);
         }
 
-        foreach ($jobs as $job) {
-            $saved  = SaveJob::where('job_id', $job->id)->where('user_id', $user->uuid)->first();
-            if ($saved) {
-                $job->is_saved = true;
-            } else {
-                $job->is_saved = false;
+
+        if ($type == 'recent') {
+            $jobIds = JobView::where('user_id', $user->uuid)->pluck('job_id');
+            $jobs = [];
+            foreach ($jobIds as $job_id) {
+                $job = Jobs::find($job_id);
+                $jobs[] = $job;
             }
-            $category = Category::find($job->category_id);
-            if ($category) {
-                $job->category_image = $category->image;
-            } else {
-                $job->category_image = '';
+            foreach ($jobs as $job) {
+                $saved  = SaveJob::where('job_id', $job->id)->where('user_id', $user->uuid)->first();
+                if ($saved) {
+                    $job->is_saved = true;
+                } else {
+                    $job->is_saved = false;
+                }
+                $category = Category::find($job->category_id);
+                if ($category) {
+                    $job->category_image = $category->image;
+                } else {
+                    $job->category_image = '';
+                }
             }
+
+            $count  = count($jobs);
+            $jobs = collect($jobs);
+            $jobs = $jobs->forPage($request->page, 12)->values();
+            return response()->json([
+                'status' => true,
+                'action' => "Jobs",
+                'data' => array(
+                    'data' => $jobs,
+                    'total' => $count
+                )
+            ]);
         }
-        return response()->json([
-            'status' => true,
-            'action' => "Jobs",
-            'data' => $jobs
-        ]);
     }
     public function create(CreateJobRequest $request)
     {
@@ -279,7 +310,7 @@ class JobController extends Controller
         // $user = User::find($offer->user_id);
 
         if ($offer) {
-            $messages = Message::where('offer_id', $offer_id)->latest()->paginate(25);
+            $messages = Message::where('offer_id', $offer_id)->where('type','!=','offer')->latest()->paginate(25);
             foreach ($messages as $message) {
                 $message->user = User::find($message->from);
             }

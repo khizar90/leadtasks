@@ -18,7 +18,9 @@ return new class extends Migration
             $table->unsignedBigInteger('offer_id')->default(0);
             $table->string('from_to')->default('');
             $table->text('type');
-            $table->string('message');
+            $table->longText('message');
+            $table->string('offer_budget');
+            $table->string('offer_time');
             $table->string('attachment')->default('');
             $table->boolean('is_read')->default(0);
             $table->string('time');
