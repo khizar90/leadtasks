@@ -33,7 +33,7 @@ class UserController extends Controller
                 $obj = new stdClass();
                 $user->portfolio = $obj;
             }
-            $user->reviews = Review::where('user_id',$user->uuid)->avg('rating');
+            $user->reviews = Review::where('user_id', $user->uuid)->avg('rating');
             return response()->json([
                 'status' => true,
                 'action' =>  'Profile',
@@ -81,9 +81,9 @@ class UserController extends Controller
     {
         $user = User::find($request->user()->uuid);
         $offers  = Offer::where('user_id', $user->uuid)->where('status', $status)->latest()->paginate(12);
-        foreach($offers as $offer){
+        foreach ($offers as $offer) {
             $job = Jobs::find($offer->job_id);
-            if($job){
+            if ($job) {
                 $category = Category::find($job->category_id);
                 if ($category) {
                     $job->category_image = $category->image;
@@ -91,13 +91,11 @@ class UserController extends Controller
                     $job->category_image = '';
                 }
                 $offer->job = $job;
-            }
-            else{
+            } else {
                 $offer->job = new stdClass();
-
             }
         }
-       
+
         return response()->json([
             'status' => true,
             'action' =>  'jobs',
@@ -122,35 +120,29 @@ class UserController extends Controller
         // ]);
     }
 
-    public function appliedJobDetail(Request $request, $job_id)
+    public function appliedJobDetail(Request $request, $offer_id)
     {
         $user = User::find($request->user()->uuid);
-        $obj = new stdClass();
-        $job = Jobs::with(['user'])->where('id', $job_id)->first();
-        $offer = Offer::where('user_id', $user->uuid)->where('job_id', $job_id)->first();
-        $category = Category::find($job->category_id);
-        if ($category) {
-            $job->category_image = $category->image;
-        } else {
-            $job->category_image = '';
-        }
+        $offer = Offer::find($offer_id);
+        if ($offer) {
+            $job = Jobs::with(['user'])->where('id', $offer->job_id)->first();
+            if ($job) {
 
-        $obj->job = $job;
-        $check = Review::where('user_id', $offer->user_id)->where('person_id', $user->uuid)->first();
-        if ($check) {
-            $offer->is_review_added = true;
-            $offer->review_count = 1;
+                $category = Category::find($job->category_id);
+                if ($category) {
+                    $job->category_image = $category->image;
+                } else {
+                    $job->category_image = '';
+                }
+                $offer->job = $job;
+            } else {
+                $offer->job = new stdClass();
+            }
         }
-        else{
-            $offer->is_review_added = false;
-            $offer->review_count = 0;
-        }
-        $obj->offer = $offer;
-
         return response()->json([
             'status' => true,
             'action' =>  'Detail',
-            'data' => $obj
+            'data' => $offer
         ]);
     }
 
@@ -168,7 +160,7 @@ class UserController extends Controller
             if ($request->status == 2) {
                 $find->complete_time =  strtotime(date('Y-m-d H:i:s'));
             }
-            
+
             $find->save();
 
             return response()->json([
@@ -239,5 +231,4 @@ class UserController extends Controller
             'action' =>  'Report Added',
         ]);
     }
-
 }
