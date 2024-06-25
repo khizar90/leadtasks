@@ -208,6 +208,7 @@ class MessageController extends Controller
         $user = User::find($request->user()->uuid);
         $create = new Offer();
         $create->user_id = $user->uuid;
+        $create->to_id = $request->to;
         $create->job_id = 0;
         $create->budget = $request->budget;
         $create->time = $request->time;

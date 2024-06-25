@@ -63,9 +63,11 @@ class UserController extends Controller
                 'action' =>  $errorMessage,
             ]);
         }
+        $job = Jobs::find($request->job_id);
         $user = User::find($request->user()->uuid);
         $create = new Offer();
         $create->user_id = $user->uuid;
+        $create->to_id = $job->user_id;
         $create->job_id = $request->job_id;
         $create->budget = $request->budget;
         $create->time = $request->time;
@@ -80,7 +82,10 @@ class UserController extends Controller
     public function listJobs(Request $request, $status)
     {
         $user = User::find($request->user()->uuid);
-        $offers  = Offer::where('user_id', $user->uuid)->where('status', $status)->latest()->paginate(12);
+        $offerIds = Offer::where('user_id', $user->uuid)->where('status', $status)->where('job_id', '!=', 0)->pluck('id');
+        $offerIds1 = Offer::where('user_id', $user->uuid)->where('status', $status)->where('job_id', 0)->where('status', '!=', 0)->pluck('id');
+        $mergedOfferIds = $offerIds->merge($offerIds1);
+        $offers = Offer::whereIn('id', $mergedOfferIds)->orderBy('id', 'desc')->paginate(12);
         foreach ($offers as $offer) {
             $job = Jobs::find($offer->job_id);
             if ($job) {
@@ -125,6 +130,7 @@ class UserController extends Controller
         $user = User::find($request->user()->uuid);
         $offer = Offer::find($offer_id);
         if ($offer) {
+            $other_user = User::find($offer->to_id);
             $job = Jobs::with(['user'])->where('id', $offer->job_id)->first();
             if ($job) {
 
@@ -137,6 +143,13 @@ class UserController extends Controller
                 $offer->job = $job;
             } else {
                 $offer->job = new stdClass();
+            }
+            $offer->other_user = $other_user;
+            $review  = Review::where('offer_id', $offer->id)->first();
+            if ($review) {
+                $offer->is_review_added = true;
+            } else {
+                $offer->is_review_added = false;
             }
         }
         return response()->json([
@@ -179,30 +192,65 @@ class UserController extends Controller
         $user = User::find($request->user()->uuid);
         if ($type == 'my_task') {
             $jobs = Jobs::with(['user'])->where('user_id', $user->uuid)->latest()->paginate(12);
+            return response()->json([
+                'status' => true,
+                'action' =>  'Jobs',
+                'data' => $jobs
+            ]);
         }
         if ($type == 'assign_task') {
-            $jobIds = Jobs::where('user_id', $user->uuid)->pluck('id');
-            $ofersIds = Offer::whereIn('job_id', $jobIds)->where('status', 1)->pluck('job_id');
-            $jobs = Jobs::whereIn('id', $ofersIds)->orderBy('id', 'desc')->paginate(12);
+            $offers = Offer::where('to_id', $user->uuid)->where('status', 1)->latest()->paginate(12);
+            foreach ($offers as $offer) {
+                $job = Jobs::find($offer->job_id);
+                if ($job) {
+                    $category = Category::find($job->category_id);
+                    if ($category) {
+                        $job->category_image = $category->image;
+                    } else {
+                        $job->category_image = '';
+                    }
+                    $offer->job = $job;
+                } else {
+                    $offer->job = new stdClass();
+                }
+            }
+            // $jobIds = Jobs::where('user_id', $user->uuid)->pluck('id');
+            // $ofersIds = Offer::whereIn('job_id', $jobIds)->where('status', 1)->pluck('job_id');
+            // $jobs = Jobs::whereIn('id', $ofersIds)->orderBy('id', 'desc')->paginate(12);
         }
         if ($type == 'complete_task') {
-            $jobIds = Jobs::where('user_id', $user->uuid)->pluck('id');
-            $ofersIds = Offer::whereIn('job_id', $jobIds)->where('status', 2)->pluck('job_id');
-            $jobs = Jobs::whereIn('id', $ofersIds)->orderBy('id', 'desc')->paginate(12);
+            $offers = Offer::where('to_id', $user->uuid)->where('status', 2)->latest()->paginate(12);
+            foreach ($offers as $offer) {
+                $job = Jobs::find($offer->job_id);
+                if ($job) {
+                    $category = Category::find($job->category_id);
+                    if ($category) {
+                        $job->category_image = $category->image;
+                    } else {
+                        $job->category_image = '';
+                    }
+                    $offer->job = $job;
+                } else {
+                    $offer->job = new stdClass();
+                }
+            }
+            // $jobIds = Jobs::where('user_id', $user->uuid)->pluck('id');
+            // $ofersIds = Offer::whereIn('job_id', $jobIds)->where('status', 2)->pluck('job_id');
+            // $jobs = Jobs::whereIn('id', $ofersIds)->orderBy('id', 'desc')->paginate(12);
         }
 
-        foreach ($jobs as $item) {
-            $category = Category::find($item->category_id);
-            if ($category) {
-                $item->category_image = $category->image;
-            } else {
-                $item->category_image = '';
-            }
-        }
+        // foreach ($jobs as $item) {
+        //     $category = Category::find($item->category_id);
+        //     if ($category) {
+        //         $item->category_image = $category->image;
+        //     } else {
+        //         $item->category_image = '';
+        //     }
+        // }
         return response()->json([
             'status' => true,
             'action' =>  'Jobs',
-            'data' => $jobs
+            'data' => $offers
         ]);
     }
 
