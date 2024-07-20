@@ -14,6 +14,7 @@ use App\Models\SaveJob;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use stdClass;
 
 class JobController extends Controller
 {
@@ -366,6 +367,40 @@ class JobController extends Controller
             'status' => true,
             'action' => "Rating List",
             'data' => $reviews
+        ]);
+    }
+
+    public function searchJob(Request $request)
+    {
+        if ($request->keyword != null || $request->keyword != '') {
+            $jobs = Jobs::where("title", "LIKE", "%" . $request->keyword . "%")->latest()->paginate(12);
+            $user = User::find($request->user()->uuid);
+            foreach ($jobs as $item) {
+                $category = Category::find($item->category_id);
+                if ($category) {
+                    $item->category_image = $category->image;
+                } else {
+                    $item->category_image = '';
+                }
+
+                $saved  = SaveJob::where('job_id', $item->id)->where('user_id', $user->uuid)->first();
+                if ($saved) {
+                    $item->is_saved = true;
+                } else {
+                    $item->is_saved = false;
+                }
+            }
+            return response()->json([
+                'status' => true,
+                'action' =>  "Jobs",
+                'data' => $jobs
+            ]);
+        }
+        $jobs = new stdClass();
+        return response()->json([
+            'status' => true,
+            'action' =>  "Jobs",
+            'data' => $jobs
         ]);
     }
 }

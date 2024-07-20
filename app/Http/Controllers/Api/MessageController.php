@@ -17,7 +17,7 @@ class MessageController extends Controller
         if ($request->offer_id) {
             $validator = Validator::make($request->all(), [
                 'from' => "required|exists:users,uuid",
-                'offer_id' => "required|exists:jobs,id",
+                'offer_id' => "required|exists:offers,id",
                 'message' => 'required'
             ]);
         } else {
@@ -242,4 +242,5 @@ class MessageController extends Controller
             'action' =>  'Offer Send',
         ]);
     }
+    
 }

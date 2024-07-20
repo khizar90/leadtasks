@@ -65,6 +65,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('list/messages/{offer_id}', [JobController::class, 'listMessages']);
     Route::post('job/add/review', [JobController::class, 'addReview']);
     Route::get('job/list/reviews/{offer_id}', [JobController::class, 'listReviews']);
+    Route::post('job/search', [JobController::class, 'searchJob']);
 
 
     Route::get('user/profile/{id}', [UserController::class, 'profile']);

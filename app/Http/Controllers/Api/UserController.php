@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\ReportRequest;
 use App\Models\Category;
 use App\Models\Jobs;
+use App\Models\JobView;
 use App\Models\Offer;
 use App\Models\Portfolio;
 use App\Models\Report;
 use App\Models\Review;
+use App\Models\SaveJob;
 use App\Models\User;
 use App\Models\UserEducation;
 use App\Models\UserSkill;
@@ -279,4 +281,6 @@ class UserController extends Controller
             'action' =>  'Report Added',
         ]);
     }
+
+    
 }
