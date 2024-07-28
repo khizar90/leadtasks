@@ -21,7 +21,7 @@ class JobController extends Controller
 
     public function index(Request $request)
     {
-        $active = Jobs::latest()->limit(12)->get();
+        $active = Jobs::limit(12)->inRandomOrder()->get();
         $user = User::find($request->user()->uuid);
         $jobIds = JobView::where('user_id', $user->uuid)->limit(12)->pluck('job_id');
         $recents = Jobs::whereIn('id', $jobIds)->latest()->limit(12)->get();
@@ -70,7 +70,7 @@ class JobController extends Controller
         $user = User::find($request->user()->uuid);
 
         if ($type == 'active') {
-            $jobs = Jobs::latest()->paginate(12);
+            $jobs = Jobs::inRandomOrder()->paginate(12);
             foreach ($jobs as $job) {
                 $saved  = SaveJob::where('job_id', $job->id)->where('user_id', $user->uuid)->first();
                 if ($saved) {

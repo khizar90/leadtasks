@@ -172,11 +172,11 @@ class UserController extends Controller
             if ($request->status == 1) {
                 $find->accept_time =  strtotime(date('Y-m-d H:i:s'));
                 $find->start_time =  strtotime(date('Y-m-d H:i:s'));
-                $find->payment_id = $request->payment_id ?: '';
-                Payment::create(['user_id' => $find->user_id, 'type' => 'payment', 'module_type' => 'accept_offer', 'module_id' => $find->id, 'price' => $find->budget, 'timestamp' => time()]);
             }
             if ($request->status == 2) {
                 $find->complete_time =  strtotime(date('Y-m-d H:i:s'));
+                $find->payment_id = $request->payment_id ?: '';
+                Payment::create(['user_id' => $find->user_id, 'type' => 'payment', 'module_type' => 'task_complete', 'module_id' => $find->id, 'price' => $find->budget, 'timestamp' => time()]);
             }
 
             $find->save();
