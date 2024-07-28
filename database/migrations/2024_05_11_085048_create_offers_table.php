@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string('accept_time')->default('');
             $table->string('start_time')->default('');
             $table->string('complete_time')->default('');
+            $table->string('payment_id')->default('');
             $table->timestamps();
         });
     }

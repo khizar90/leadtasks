@@ -24,6 +24,9 @@ return new class extends Migration
             $table->string('country')->default('');
             $table->longText('address')->default('');
             $table->longText('about')->default('');
+            $table->string('stripe_customer_id')->default('');
+            $table->string('stripe_connect_id')->default('');
+            $table->boolean('stripe_connect_payout_enabled')->default(0);
             $table->timestamps();
         });
     }

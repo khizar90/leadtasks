@@ -147,6 +147,7 @@ class JobController extends Controller
         $create->lat = $request->lat;
         $create->lng = $request->lng;
         $create->is_remote = $request->is_remote;
+        $create->payment_id = $request->payment_id ?: '';
         $create->time = strtotime(date('Y-m-d H:i:s'));
         $create->save();
 
@@ -311,7 +312,7 @@ class JobController extends Controller
         // $user = User::find($offer->user_id);
 
         if ($offer) {
-            $messages = Message::where('offer_id', $offer_id)->where('type','!=','offer')->latest()->paginate(25);
+            $messages = Message::where('offer_id', $offer_id)->where('type', '!=', 'offer')->latest()->paginate(25);
             foreach ($messages as $message) {
                 $message->user = User::find($message->from);
             }

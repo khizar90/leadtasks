@@ -28,6 +28,7 @@ return new class extends Migration
             $table->string('lng');
             $table->boolean('is_remote')->default(false);
             $table->string('time');
+            $table->string('payment_id')->default('');
             $table->timestamps();
         });
     }

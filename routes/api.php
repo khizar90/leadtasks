@@ -3,10 +3,12 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\JobController;
 use App\Http\Controllers\Api\MessageController;
+use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\UserDetailController;
+use App\Http\Controllers\Api\WalletController;
 use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -51,8 +53,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('user/delete/skill/{id}', [UserDetailController::class, 'deleteSkill']);
     Route::post('user/add/portfolio', [UserDetailController::class, 'addPortfolio']);
     Route::get('user/delete/portfolio/{id}', [UserDetailController::class, 'deletePortfolio']);
-    
-    
+
+
 
     Route::post('create/job', [JobController::class, 'create']);
     Route::post('edit/job', [JobController::class, 'edit']);
@@ -83,7 +85,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('create/offer', [MessageController::class, 'createOffer']);
 
 
-});
-Route::get('splash/{user_id?}' , [SettingController::class , 'splash']);
-Route::get('faqs', [SettingController::class, 'faqs']);
+    Route::post('create/intent', [PaymentController::class, 'craeteIntent']);
 
+    Route::post('user/wallet/create', [WalletController::class, 'create']);
+    Route::get('user/wallet/detail/{user_id}', [WalletController::class, 'detail']);
+    Route::post('user/wallet/payout/', [WalletController::class, 'payout']);
+});
+Route::get('splash/{user_id?}', [SettingController::class, 'splash']);
+Route::get('faqs', [SettingController::class, 'faqs']);

@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Jobs;
 use App\Models\JobView;
 use App\Models\Offer;
+use App\Models\Payment;
 use App\Models\Portfolio;
 use App\Models\Report;
 use App\Models\Review;
@@ -171,6 +172,8 @@ class UserController extends Controller
             if ($request->status == 1) {
                 $find->accept_time =  strtotime(date('Y-m-d H:i:s'));
                 $find->start_time =  strtotime(date('Y-m-d H:i:s'));
+                $find->payment_id = $request->payment_id ?: '';
+                Payment::create(['user_id' => $find->user_id, 'type' => 'payment', 'module_type' => 'accept_offer', 'module_id' => $find->id, 'price' => $find->budget, 'timestamp' => time()]);
             }
             if ($request->status == 2) {
                 $find->complete_time =  strtotime(date('Y-m-d H:i:s'));
@@ -281,6 +284,4 @@ class UserController extends Controller
             'action' =>  'Report Added',
         ]);
     }
-
-    
 }
